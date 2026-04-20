@@ -1,1 +1,173 @@
-<p>requests-page works!</p>
+<app-page-header
+  [title]="auth.role() === 'professor' ? 'Minhas Solicitações' : 'Solicitações de Projetos'"
+  [description]="
+    auth.role() === 'professor'
+      ? 'Acompanhe suas solicitações de projetos'
+      : 'Gerencie as solicitações de projetos'
+  "
+>
+  <button
+    *ngIf="auth.role() === 'professor'"
+    (click)="openNewRequest()"
+    class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground shadow hover:bg-primary/90 h-9 px-4 py-2 gap-2"
+  >
+    <lucide-icon [img]="Plus" class="h-4 w-4"></lucide-icon> Nova Solicitação
+  </button>
+</app-page-header>
+
+<div class="glass-card overflow-hidden">
+  <div class="p-4 border-b">
+    <div class="relative max-w-sm">
+      <lucide-icon
+        [img]="Search"
+        class="absolute left-1 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground"
+      ></lucide-icon>
+      <input
+        type="text"
+        placeholder="Buscar projeto..."
+        [(ngModel)]="searchQuery"
+        class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 pl-9"
+      />
+    </div>
+  </div>
+
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="border-b bg-muted/50">
+          <th class="text-left px-6 py-3 font-medium text-muted-foreground">Projeto</th>
+          <th
+            *ngIf="auth.role() === 'admin'"
+            class="text-left px-6 py-3 font-medium text-muted-foreground"
+          >
+            Professor
+          </th>
+          <th class="text-left px-6 py-3 font-medium text-muted-foreground">Tipo</th>
+          <th class="text-left px-6 py-3 font-medium text-muted-foreground">Data</th>
+          <th class="text-left px-6 py-3 font-medium text-muted-foreground">Status</th>
+          <th class="text-right px-6 py-3 font-medium text-muted-foreground">Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr
+          *ngFor="let pr of filteredRequests"
+          class="border-b last:border-0 hover:bg-muted/30 transition-colors"
+        >
+          <td class="px-6 py-3 font-medium">{{ pr.name }}</td>
+          <td *ngIf="auth.role() === 'admin'" class="px-6 py-3 text-muted-foreground">
+            {{ pr.professor }}
+          </td>
+          <td class="px-6 py-3 text-muted-foreground">{{ pr.type }}</td>
+          <td class="px-6 py-3 text-muted-foreground">{{ pr.createdAt }}</td>
+          <td class="px-6 py-3">
+            <app-status-badge [status]="pr.status"></app-status-badge>
+          </td>
+          <td class="px-6 py-3 text-right">
+            <button
+              (click)="viewDetails(pr.id)"
+              class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground h-8 w-8"
+            >
+              <lucide-icon [img]="Eye" class="h-4 w-4"></lucide-icon>
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div *ngIf="isNewRequestOpen" class="relative z-50">
+  <div
+    class="fixed inset-0 bg-background/80 backdrop-blur-sm transition-all"
+    (click)="closeNewRequest()"
+  ></div>
+
+  <div
+    class="fixed left-[50%] top-[50%] z-50 grid w-full max-w-2xl translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg sm:rounded-lg max-h-[90vh] overflow-y-auto"
+  >
+    <div class="flex flex-col space-y-1.5 text-center sm:text-left mb-2">
+      <h2 class="text-lg font-semibold leading-none tracking-tight">Nova Solicitação de Projeto</h2>
+      <button
+        (click)="closeNewRequest()"
+        class="absolute right-4 top-4 rounded-sm opacity-70 hover:opacity-100 focus:outline-none"
+      >
+        <lucide-icon [img]="X" class="h-4 w-4"></lucide-icon>
+      </button>
+    </div>
+
+    <div class="grid grid-cols-2 gap-4 py-2">
+      <div class="space-y-2 col-span-2">
+        <label class="text-sm font-medium leading-none">Nome do Projeto</label>
+        <input
+          type="text"
+          placeholder="Nome do projeto"
+          class="flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+        />
+      </div>
+      <div class="space-y-2 col-span-2">
+        <label class="text-sm font-medium leading-none">Objetivo</label>
+        <input
+          type="text"
+          placeholder="Objetivo principal do projeto"
+          class="flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+        />
+      </div>
+      <div class="space-y-2">
+        <label class="text-sm font-medium leading-none">Usuários Alvo</label>
+        <input
+          type="text"
+          placeholder="Quem usará o sistema?"
+          class="flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+        />
+      </div>
+      <div class="space-y-2">
+        <label class="text-sm font-medium leading-none">Local de Uso</label>
+        <input
+          type="text"
+          placeholder="Onde será utilizado?"
+          class="flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+        />
+      </div>
+      <div class="space-y-2">
+        <label class="text-sm font-medium leading-none">Tipo</label>
+        <select
+          class="flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+        >
+          <option value="">Selecione</option>
+          <option>Interno</option>
+          <option>Externo</option>
+        </select>
+      </div>
+      <div class="space-y-2">
+        <label class="text-sm font-medium leading-none">Previsão de Início</label>
+        <input
+          type="date"
+          class="flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+        />
+      </div>
+      <div class="space-y-2 col-span-2">
+        <label class="text-sm font-medium leading-none">Escopo do Projeto</label>
+        <textarea
+          placeholder="Descreva o escopo detalhado do projeto..."
+          rows="4"
+          class="flex min-h-[80px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+        ></textarea>
+      </div>
+    </div>
+
+    <div class="flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2 mt-2">
+      <button
+        (click)="closeNewRequest()"
+        class="mt-2 sm:mt-0 inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2"
+      >
+        Cancelar
+      </button>
+      <button
+        (click)="closeNewRequest()"
+        class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2"
+      >
+        Enviar Solicitação
+      </button>
+    </div>
+  </div>
+</div>
