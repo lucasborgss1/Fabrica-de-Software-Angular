@@ -55,7 +55,6 @@ export class RequestDetailPage implements OnInit {
   }
 
   goBack() {
-    // Equivale ao navigate(-1) do React
     this.location.back();
   }
 }

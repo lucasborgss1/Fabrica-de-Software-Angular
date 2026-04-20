@@ -1,1 +1,132 @@
-<p>workgroups-page works!</p>
+<app-page-header title="Grupos de Trabalho" description="Gerenciar grupos de trabalho dos projetos">
+  <button
+    (click)="openModal()"
+    class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground shadow hover:bg-primary/90 h-9 px-4 py-2 gap-2"
+  >
+    <lucide-icon [img]="Plus" class="h-4 w-4"></lucide-icon> Novo Grupo
+  </button>
+</app-page-header>
+
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+  <div *ngFor="let wg of workgroups" class="glass-card p-5 space-y-4">
+    <div class="flex items-start justify-between">
+      <div>
+        <h3 class="font-semibold text-lg">{{ wg.projectName }}</h3>
+        <span class="text-sm text-muted-foreground">Projeto #{{ wg.projectId }}</span>
+      </div>
+      <div class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+        <lucide-icon [img]="Users" class="h-5 w-5 text-primary"></lucide-icon>
+      </div>
+    </div>
+
+    <div class="space-y-3 text-sm">
+      <div class="flex items-center gap-2">
+        <lucide-icon [img]="UserCog" class="h-4 w-4 text-muted-foreground"></lucide-icon>
+        <span class="text-muted-foreground">Coordenador:</span>
+        <span class="font-medium">{{ wg.coordinator }}</span>
+      </div>
+
+      <div>
+        <div class="flex items-center gap-2 mb-2">
+          <lucide-icon [img]="GraduationCap" class="h-4 w-4 text-muted-foreground"></lucide-icon>
+          <span class="text-muted-foreground">Alunos ({{ wg.students.length }}):</span>
+        </div>
+        <div class="flex flex-wrap gap-2">
+          <span
+            *ngFor="let s of wg.students"
+            class="px-3 py-1 bg-muted rounded-full text-xs font-medium"
+          >
+            {{ s }}
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <div class="flex gap-2 pt-2 border-t">
+      <button
+        class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground h-8 px-3"
+      >
+        Editar Grupo
+      </button>
+      <button
+        class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground h-8 px-3"
+      >
+        Gerenciar Alunos
+      </button>
+    </div>
+  </div>
+</div>
+
+<div *ngIf="isModalOpen" class="relative z-50">
+  <div
+    class="fixed inset-0 bg-background/80 backdrop-blur-sm transition-all"
+    (click)="closeModal()"
+  ></div>
+
+  <div
+    class="fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg sm:rounded-lg"
+  >
+    <div class="flex flex-col space-y-1.5 text-center sm:text-left mb-2">
+      <h2 class="text-lg font-semibold leading-none tracking-tight">Novo Grupo de Trabalho</h2>
+      <button
+        (click)="closeModal()"
+        class="absolute right-4 top-4 rounded-sm opacity-70 hover:opacity-100 focus:outline-none"
+      >
+        <lucide-icon [img]="X" class="h-4 w-4"></lucide-icon>
+      </button>
+    </div>
+
+    <div class="space-y-4 py-2">
+      <div class="space-y-2">
+        <label class="text-sm font-medium leading-none">Projeto</label>
+        <select
+          class="flex w-full h-10 rounded-md border border-input bg-card px-3 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+        >
+          <option value="">Selecione o projeto</option>
+          <option>Sistema de Gestão Acadêmica</option>
+          <option>App de Transporte Universitário</option>
+        </select>
+      </div>
+
+      <div class="space-y-2">
+        <label class="text-sm font-medium leading-none">Coordenador (Professor)</label>
+        <select
+          class="flex w-full h-10 rounded-md border border-input bg-card px-3 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+        >
+          <option value="">Selecione o professor</option>
+          <option *ngFor="let p of activeProfessors" [value]="p.id">{{ p.name }}</option>
+        </select>
+      </div>
+
+      <div class="space-y-2">
+        <label class="text-sm font-medium leading-none">Alunos</label>
+        <div
+          class="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto border border-input rounded-lg p-3"
+        >
+          <label
+            *ngFor="let s of activeStudents"
+            class="flex items-center gap-2 text-sm cursor-pointer hover:bg-muted/50 p-1 rounded transition-colors"
+          >
+            <input type="checkbox" class="rounded border-input text-primary focus:ring-primary" />
+            <span class="truncate">{{ s.name }}</span>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <div class="flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2 mt-2">
+      <button
+        (click)="closeModal()"
+        class="mt-2 sm:mt-0 inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2"
+      >
+        Cancelar
+      </button>
+      <button
+        (click)="closeModal()"
+        class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2"
+      >
+        Criar Grupo
+      </button>
+    </div>
+  </div>
+</div>
