@@ -1,1 +1,145 @@
-<p>professors-page works!</p>
+<app-page-header title="Professores" description="Gerenciar professores cadastrados">
+  <button
+    (click)="openModal()"
+    class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground shadow hover:bg-primary/90 h-9 px-4 py-2 gap-2"
+  >
+    <lucide-icon [img]="Plus" class="h-4 w-4"></lucide-icon> Novo Professor
+  </button>
+</app-page-header>
+
+<div class="glass-card overflow-hidden">
+  <div class="p-4 border-b">
+    <div class="relative max-w-sm">
+      <lucide-icon
+        [img]="Search"
+        class="absolute left-1 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground"
+      ></lucide-icon>
+      <input
+        type="text"
+        placeholder="Buscar professor..."
+        [(ngModel)]="searchQuery"
+        class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 pl-9"
+      />
+    </div>
+  </div>
+
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="border-b bg-muted/50">
+          <th class="text-left px-6 py-3 font-medium text-muted-foreground">Nome</th>
+          <th class="text-left px-6 py-3 font-medium text-muted-foreground">E-mail</th>
+          <th class="text-left px-6 py-3 font-medium text-muted-foreground">Telefone</th>
+          <th class="text-left px-6 py-3 font-medium text-muted-foreground">Status</th>
+          <th class="text-right px-6 py-3 font-medium text-muted-foreground">Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr
+          *ngFor="let p of filteredProfessors"
+          class="border-b last:border-0 hover:bg-muted/30 transition-colors"
+        >
+          <td class="px-6 py-3 font-medium">{{ p.name }}</td>
+          <td class="px-6 py-3 text-muted-foreground">{{ p.email }}</td>
+          <td class="px-6 py-3 text-muted-foreground">{{ p.phone }}</td>
+          <td class="px-6 py-3">
+            <app-status-badge [status]="p.status"></app-status-badge>
+          </td>
+          <td class="px-6 py-3 text-right">
+            <div class="flex items-center justify-end gap-1">
+              <button
+                (click)="openModal(p)"
+                class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground h-8 w-8"
+              >
+                <lucide-icon [img]="Pencil" class="h-4 w-4"></lucide-icon>
+              </button>
+              <button
+                (click)="toggleStatus(p.id)"
+                class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground h-8 w-8"
+              >
+                <lucide-icon
+                  *ngIf="p.status === 'active'"
+                  [img]="ToggleRight"
+                  class="h-4 w-4 text-success"
+                ></lucide-icon>
+                <lucide-icon
+                  *ngIf="p.status !== 'active'"
+                  [img]="ToggleLeft"
+                  class="h-4 w-4 text-muted-foreground"
+                ></lucide-icon>
+              </button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div *ngIf="isModalOpen" class="relative z-50">
+  <div
+    class="fixed inset-0 bg-background/80 backdrop-blur-sm transition-all"
+    (click)="closeModal()"
+  ></div>
+
+  <div
+    class="fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg sm:rounded-lg"
+  >
+    <div class="flex flex-col space-y-1.5 text-center sm:text-left mb-2">
+      <h2 class="text-lg font-semibold leading-none tracking-tight">
+        {{ editing ? 'Editar Professor' : 'Novo Professor' }}
+      </h2>
+      <button
+        (click)="closeModal()"
+        class="absolute right-4 top-4 rounded-sm opacity-70 hover:opacity-100 focus:outline-none"
+      >
+        <lucide-icon [img]="X" class="h-4 w-4"></lucide-icon>
+      </button>
+    </div>
+
+    <div class="space-y-4 py-2">
+      <div class="space-y-2">
+        <label class="text-sm font-medium leading-none">Nome completo</label>
+        <input
+          type="text"
+          [value]="editing?.name || ''"
+          placeholder="Nome do professor"
+          class="flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+        />
+      </div>
+      <div class="space-y-2">
+        <label class="text-sm font-medium leading-none">E-mail</label>
+        <input
+          type="email"
+          [value]="editing?.email || ''"
+          placeholder="email@universidade.edu"
+          class="flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+        />
+      </div>
+      <div class="space-y-2">
+        <label class="text-sm font-medium leading-none">Telefone</label>
+        <input
+          type="text"
+          [value]="editing?.phone || ''"
+          placeholder="(00) 00000-0000"
+          class="flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+        />
+      </div>
+    </div>
+
+    <div class="flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2 mt-2">
+      <button
+        (click)="closeModal()"
+        class="mt-2 sm:mt-0 inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2"
+      >
+        Cancelar
+      </button>
+      <button
+        (click)="closeModal()"
+        class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2"
+      >
+        Salvar
+      </button>
+    </div>
+  </div>
+</div>
