@@ -5,6 +5,7 @@ import { Injectable, signal } from '@angular/core';
 })
 export class Auth {
   readonly isLoggedIn = signal(false);
+  role = signal('admin');
 
   login() {
     this.isLoggedIn.set(true);
@@ -12,5 +13,9 @@ export class Auth {
 
   logout() {
     this.isLoggedIn.set(false);
+  }
+
+  setRole(newRole: string) {
+    this.role.set(newRole);
   }
 }

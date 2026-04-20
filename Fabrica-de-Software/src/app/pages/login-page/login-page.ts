@@ -25,7 +25,7 @@ export class LoginPage {
   readonly EyeOff = EyeOff;
 
   private router = inject(Router);
-  private auth = inject(Auth);
+  private authService = inject(Auth);
 
   togglePassword() {
     this.showPassword = !this.showPassword;
@@ -35,7 +35,7 @@ export class LoginPage {
     event.preventDefault();
     this.isLoading = true;
     // TODO: integrar com endpoint de autenticação quando disponível
-    this.auth.login();
+    this.authService.login();
     this.router.navigate(['/dashboard']);
   }
 }

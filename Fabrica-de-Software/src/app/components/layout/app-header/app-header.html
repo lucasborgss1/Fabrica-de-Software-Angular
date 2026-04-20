@@ -1,0 +1,82 @@
+<header
+  class="h-16 border-b bg-card flex items-center justify-between px-4 lg:px-6 sticky top-0 z-30"
+>
+  <div class="flex items-center gap-3">
+    <button class="text-muted-foreground hover:text-foreground md:hidden">
+      <lucide-icon [img]="Menu" class="h-6 w-6"></lucide-icon>
+    </button>
+  </div>
+
+  <div class="flex items-center gap-3">
+    <div class="relative">
+      <button
+        (click)="toggleRoleMenu()"
+        class="flex items-center gap-2 text-xs px-3 py-1.5 rounded-lg bg-secondary text-secondary-foreground hover:bg-accent transition-colors"
+      >
+        {{ auth.role() === 'admin' ? 'Admin' : 'Professor' }}
+        <lucide-icon [img]="ChevronDown" class="h-3 w-3"></lucide-icon>
+      </button>
+
+      <div
+        *ngIf="showRoleMenu"
+        class="absolute right-0 top-full mt-1 w-36 bg-card rounded-lg border shadow-lg z-50"
+      >
+        <button
+          (click)="changeRole('admin')"
+          class="w-full text-left px-3 py-2 text-sm hover:bg-accent transition-colors rounded-t-lg"
+        >
+          Administrador
+        </button>
+        <button
+          (click)="changeRole('professor')"
+          class="w-full text-left px-3 py-2 text-sm hover:bg-accent transition-colors rounded-b-lg"
+        >
+          Professor
+        </button>
+      </div>
+    </div>
+
+    <div class="relative">
+      <button
+        (click)="toggleNotifications()"
+        class="relative p-2 rounded-lg hover:bg-accent transition-colors"
+      >
+        <lucide-icon [img]="Bell" class="h-5 w-5 text-muted-foreground"></lucide-icon>
+        <span
+          *ngIf="unreadCount > 0"
+          class="absolute -top-0.5 -right-0.5 w-4 h-4 bg-destructive text-destructive-foreground text-[10px] font-bold rounded-full flex items-center justify-center"
+        >
+          {{ unreadCount }}
+        </span>
+      </button>
+
+      <div
+        *ngIf="showNotifications"
+        class="absolute right-0 top-full mt-1 w-80 bg-card rounded-xl border shadow-lg z-50 overflow-hidden"
+      >
+        <div class="px-4 py-3 border-b">
+          <h3 class="text-sm font-semibold">Notificações</h3>
+        </div>
+        <div class="max-h-80 overflow-y-auto">
+          <div
+            *ngFor="let n of notifications"
+            class="px-4 py-3 border-b last:border-0 transition-colors hover:bg-accent"
+            [ngClass]="{ 'bg-primary/5': !n.read }"
+          >
+            <p class="text-sm">{{ n.message }}</p>
+            <p class="text-xs text-muted-foreground mt-1">{{ n.time }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-2 pl-2 border-l">
+      <div
+        class="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-xs font-semibold"
+      >
+        U
+      </div>
+      <span class="text-sm font-medium hidden md:block">Usuário</span>
+    </div>
+  </div>
+</header>
