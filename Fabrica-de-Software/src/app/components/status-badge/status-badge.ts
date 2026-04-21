@@ -1,5 +1,7 @@
-import { Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Component, Input } from '@angular/core';
+
+import { formatApiStatus } from '../../core/models/api.models';
 
 @Component({
   selector: 'app-status-badge',
@@ -12,27 +14,26 @@ import { CommonModule } from '@angular/common';
   `,
 })
 export class StatusBadge {
-  @Input() status: string = '';
+  @Input() status = '';
 
   get badgeClass(): string {
     const statusClasses: Record<string, string> = {
-      'Em análise': 'status-analysis',
-      Aprovado: 'status-approved',
-      Rejeitado: 'status-rejected',
-      Cancelado: 'status-cancelled',
-      'Em andamento': 'status-approved',
+      SOLICITADO: 'status-analysis',
+      EM_ANALISE: 'status-analysis',
+      APROVADO: 'status-approved',
+      FINALIZADO: 'status-approved',
+      NAO_APROVADO: 'status-rejected',
+      ATIVO: 'status-active',
+      INATIVO: 'status-inactive',
       active: 'status-active',
       inactive: 'status-inactive',
     };
 
     const mappedClass = statusClasses[this.status] || 'status-badge bg-muted text-muted-foreground';
-    // Garantimos que a classe base sempre seja aplicada junto com a cor
     return mappedClass.includes('status-badge') ? mappedClass : `status-badge ${mappedClass}`;
   }
 
   get displayStatus(): string {
-    if (this.status === 'active') return 'Ativo';
-    if (this.status === 'inactive') return 'Inativo';
-    return this.status;
+    return formatApiStatus(this.status);
   }
 }

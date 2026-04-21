@@ -1,15 +1,20 @@
 <aside
-  class="flex flex-col h-full bg-card border-r transition-all duration-300"
+  class="flex flex-col h-full bg-[#0f2a4a] border-r border-[#1a3a60] transition-all duration-300 text-gray-100"
   [ngClass]="collapsed ? 'w-16' : 'w-64'"
 >
-  <div class="flex items-center gap-3 px-4 py-5 border-b h-16 shrink-0">
-    <div class="w-8 h-8 rounded-lg bg-primary flex items-center justify-center shrink-0">
-      <lucide-icon [img]="FolderKanban" class="w-4 h-4 text-primary-foreground"></lucide-icon>
+  <div class="flex items-center gap-3 px-4 py-5 border-b border-[#1a3a60] h-16 shrink-0">
+    <div
+      class="w-8 h-8 rounded-lg bg-blue-500 flex items-center justify-center shrink-0 transition-colors duration-300 ease-in-out"
+    >
+      <lucide-icon
+        [img]="FolderKanban"
+        class="w-4 h-4 text-white transition-colors duration-300"
+      ></lucide-icon>
     </div>
 
     <div *ngIf="!collapsed" class="flex flex-col overflow-hidden whitespace-nowrap animate-fade-in">
-      <span class="text-sm font-semibold text-foreground">Fábrica de Software</span>
-      <span class="text-xs text-muted-foreground">Gestão de Projetos</span>
+      <span class="text-sm font-semibold text-white">Fábrica de Software</span>
+      <span class="text-xs text-gray-300">Gestão de Projetos</span>
     </div>
   </div>
 
@@ -17,7 +22,7 @@
     <div>
       <h4
         *ngIf="!collapsed"
-        class="text-xs uppercase tracking-wider text-muted-foreground font-medium mb-2 px-2"
+        class="text-xs uppercase tracking-wider text-gray-400 font-medium mb-2 px-2"
       >
         Menu
       </h4>
@@ -26,26 +31,38 @@
         <a
           *ngFor="let item of currentItems"
           [routerLink]="item.url"
-          routerLinkActive="bg-accent text-accent-foreground font-medium"
+          routerLinkActive="bg-blue-600 text-white font-medium"
           [routerLinkActiveOptions]="{ exact: item.url === '/dashboard' }"
-          class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-foreground/70 transition-colors hover:bg-accent hover:text-accent-foreground group"
+          class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-gray-300 transition-all duration-200 ease-in-out hover:bg-blue-500 hover:text-white group"
           [title]="collapsed ? item.title : ''"
         >
-          <lucide-icon [img]="item.icon" class="h-4 w-4 shrink-0"></lucide-icon>
-          <span *ngIf="!collapsed" class="truncate">{{ item.title }}</span>
+          <lucide-icon
+            [img]="item.icon"
+            class="h-4 w-4 shrink-0 transition-colors duration-200 ease-in-out group-hover:text-white"
+          >
+          </lucide-icon>
+
+          <span *ngIf="!collapsed" class="truncate transition-colors duration-200">
+            {{ item.title }}
+          </span>
         </a>
       </nav>
     </div>
   </div>
 
-  <div class="p-3 border-t mt-auto">
+  <div class="p-3 border-t border-[#1a3a60] mt-auto">
     <button
       (click)="handleLogout()"
-      class="flex items-center w-full gap-3 rounded-lg px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive group"
+      class="flex items-center w-full gap-3 rounded-lg px-3 py-2.5 text-sm text-gray-400 transition-all duration-200 ease-in-out hover:bg-red-500/20 hover:text-red-400 group"
       [title]="collapsed ? 'Sair' : ''"
     >
-      <lucide-icon [img]="LogOut" class="h-4 w-4 shrink-0"></lucide-icon>
-      <span *ngIf="!collapsed">Sair</span>
+      <lucide-icon
+        [img]="LogOut"
+        class="h-4 w-4 shrink-0 transition-colors duration-200 group-hover:text-red-400"
+      >
+      </lucide-icon>
+
+      <span *ngIf="!collapsed" class="transition-colors duration-200"> Sair </span>
     </button>
   </div>
 </aside>

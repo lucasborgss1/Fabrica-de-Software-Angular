@@ -10,34 +10,43 @@
       </div>
 
       <form (submit)="handleLogin($event)" class="space-y-4">
+        <div class="rounded-lg border border-input bg-muted/40 p-3 text-sm text-muted-foreground">
+          Use seu login e sua senha do sistema.
+        </div>
+
+        <div
+          *ngIf="errorMessage()"
+          class="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive"
+        >
+          {{ errorMessage() }}
+        </div>
+
         <div class="space-y-2">
-          <label
-            for="email"
-            class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-            >E-mail</label
+          <label for="login" class="text-sm font-medium leading-none"
+            >Login <span class="text-destructive">*</span></label
           >
           <app-input
-            id="email"
-            type="email"
-            placeholder="seu@email.edu"
-            [(ngModel)]="email"
-            name="email"
+            id="login"
+            type="text"
+            placeholder="adm"
+            [ngModel]="login()"
+            (ngModelChange)="login.set($event)"
+            name="login"
             className="h-11"
           />
         </div>
 
         <div class="space-y-2">
-          <label
-            for="password"
-            class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-            >Senha</label
+          <label for="password" class="text-sm font-medium leading-none"
+            >Senha <span class="text-destructive">*</span></label
           >
           <div class="relative">
             <app-input
               id="password"
-              [type]="showPassword ? 'text' : 'password'"
+              [type]="showPassword() ? 'text' : 'password'"
               placeholder="••••••••"
-              [(ngModel)]="password"
+              [ngModel]="password()"
+              (ngModelChange)="password.set($event)"
               name="password"
               className="h-11 pr-10"
             />
@@ -48,17 +57,25 @@
               className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 text-muted-foreground hover:text-foreground"
               (clicked)="togglePassword()"
             >
-              <lucide-icon [img]="showPassword ? EyeOff : Eye" class="h-4 w-4"></lucide-icon>
+              <lucide-icon [img]="showPassword() ? EyeOff : Eye" class="h-4 w-4"></lucide-icon>
             </app-button>
           </div>
         </div>
 
-        <div class="flex items-center justify-between text-sm">
+        <div class="flex items-center justify-between text-sm p-2">
           <label class="flex items-center gap-2 cursor-pointer">
-            <input type="checkbox" [(ngModel)]="rememberMe" name="rememberMe" class="rounded border-input" />
-            <span class="text-muted-foreground">Lembrar-me</span>
+            <input
+              type="checkbox"
+              [ngModel]="rememberMe()"
+              (ngModelChange)="rememberMe.set($event)"
+              name="rememberMe"
+              class="rounded border-input"
+            />
+            <span class="text-muted-foreground">Manter sessão</span>
           </label>
-          <a href="#" class="text-primary hover:underline">Esqueceu a senha?</a>
+          <span class="text-muted-foreground">
+            <a href="#">Esqueceu a senha?</a>
+          </span>
         </div>
 
         <app-button
@@ -66,9 +83,9 @@
           variant="default"
           size="lg"
           className="w-full"
-          [disabled]="isLoading"
+          [disabled]="isLoading()"
         >
-          {{ isLoading ? 'Entrando...' : 'Entrar' }}
+          {{ isLoading() ? 'Entrando...' : 'Entrar' }}
         </app-button>
       </form>
     </div>

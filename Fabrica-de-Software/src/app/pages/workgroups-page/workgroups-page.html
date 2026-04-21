@@ -7,57 +7,76 @@
   </button>
 </app-page-header>
 
-<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-  <div *ngFor="let wg of workgroups" class="glass-card p-5 space-y-4">
-    <div class="flex items-start justify-between">
+<div
+  *ngIf="errorMessage()"
+  class="mb-4 rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive"
+>
+  {{ errorMessage() }}
+</div>
+
+<div
+  *ngIf="successMessage()"
+  class="mb-4 rounded-lg border border-success/30 bg-success/10 p-3 text-sm text-success"
+>
+  {{ successMessage() }}
+</div>
+
+<div *ngIf="isLoading()" class="glass-card p-8 text-center text-muted-foreground">
+  Carregando grupos...
+</div>
+
+<div
+  *ngIf="!isLoading() && workgroups().length === 0"
+  class="glass-card p-8 text-center text-muted-foreground"
+>
+  Nenhum grupo encontrado.
+</div>
+
+<div *ngIf="!isLoading() && workgroups().length > 0" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+  <div *ngFor="let wg of workgroups()" class="glass-card p-5 space-y-4">
+    <div class="flex items-start justify-between gap-4">
       <div>
-        <h3 class="font-semibold text-lg">{{ wg.projectName }}</h3>
-        <span class="text-sm text-muted-foreground">Projeto #{{ wg.projectId }}</span>
+        <h3 class="font-semibold text-lg">{{ wg.nomeProjeto }}</h3>
+        <p class="text-sm text-muted-foreground">Criado em {{ wg.dataCriacao }}</p>
       </div>
-      <div class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-        <lucide-icon [img]="Users" class="h-5 w-5 text-primary"></lucide-icon>
-      </div>
+      <app-status-badge [status]="wg.statusGrupo"></app-status-badge>
     </div>
 
     <div class="space-y-3 text-sm">
       <div class="flex items-center gap-2">
         <lucide-icon [img]="UserCog" class="h-4 w-4 text-muted-foreground"></lucide-icon>
         <span class="text-muted-foreground">Coordenador:</span>
-        <span class="font-medium">{{ wg.coordinator }}</span>
+        <span class="font-medium">{{ wg.nomeProfessorCoordenador }}</span>
       </div>
 
       <div>
         <div class="flex items-center gap-2 mb-2">
           <lucide-icon [img]="GraduationCap" class="h-4 w-4 text-muted-foreground"></lucide-icon>
-          <span class="text-muted-foreground">Alunos ({{ wg.students.length }}):</span>
+          <span class="text-muted-foreground">Alunos ({{ wg.nomesAlunos.length }}):</span>
         </div>
         <div class="flex flex-wrap gap-2">
           <span
-            *ngFor="let s of wg.students"
+            *ngFor="let student of wg.nomesAlunos"
             class="px-3 py-1 bg-muted rounded-full text-xs font-medium"
           >
-            {{ s }}
+            {{ student }}
           </span>
         </div>
       </div>
     </div>
 
-    <div class="flex gap-2 pt-2 border-t">
+    <div class="pt-2 border-t">
       <button
+        (click)="deactivateGroup(wg.id, wg.statusGrupo)"
         class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground h-8 px-3"
       >
-        Editar Grupo
-      </button>
-      <button
-        class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground h-8 px-3"
-      >
-        Gerenciar Alunos
+        {{ wg.statusGrupo === 'ATIVO' ? 'Inativar Grupo' : 'Grupo Inativo' }}
       </button>
     </div>
   </div>
 </div>
 
-<div *ngIf="isModalOpen" class="relative z-50">
+<div *ngIf="isModalOpen()" class="relative z-50">
   <div
     class="fixed inset-0 bg-background/80 backdrop-blur-sm transition-all"
     (click)="closeModal()"
@@ -76,39 +95,82 @@
       </button>
     </div>
 
+    <div
+      *ngIf="errorMessage()"
+      class="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive"
+    >
+      {{ errorMessage() }}
+    </div>
+
+    <div
+      *ngIf="successMessage()"
+      class="rounded-lg border border-success/30 bg-success/10 p-3 text-sm text-success"
+    >
+      {{ successMessage() }}
+    </div>
+
     <div class="space-y-4 py-2">
       <div class="space-y-2">
         <label class="text-sm font-medium leading-none">Projeto</label>
         <select
-          class="flex w-full h-10 rounded-md border border-input bg-card px-3 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+          [(ngModel)]="form.projetoId"
+          [disabled]="availableProjects().length === 0"
+          class="flex w-full h-10 rounded-md border border-input bg-card px-3 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          <option value="">Selecione o projeto</option>
-          <option>Sistema de Gestão Acadêmica</option>
-          <option>App de Transporte Universitário</option>
+          <option value="">
+            {{
+              availableProjects().length === 0 ? 'Nenhum projeto disponível' : 'Selecione o projeto'
+            }}
+          </option>
+          <option *ngFor="let project of availableProjects()" [value]="project.id">
+            {{ project.nome }}
+          </option>
         </select>
       </div>
 
       <div class="space-y-2">
         <label class="text-sm font-medium leading-none">Coordenador (Professor)</label>
         <select
-          class="flex w-full h-10 rounded-md border border-input bg-card px-3 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+          [(ngModel)]="form.professorCoordenadorId"
+          [disabled]="activeProfessors().length === 0"
+          class="flex w-full h-10 rounded-md border border-input bg-card px-3 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          <option value="">Selecione o professor</option>
-          <option *ngFor="let p of activeProfessors" [value]="p.id">{{ p.name }}</option>
+          <option value="">
+            {{
+              activeProfessors().length === 0
+                ? 'Nenhum professor disponível'
+                : 'Selecione o professor'
+            }}
+          </option>
+          <option *ngFor="let professor of activeProfessors()" [value]="professor.id">
+            {{ professor.nome }}
+          </option>
         </select>
       </div>
 
       <div class="space-y-2">
         <label class="text-sm font-medium leading-none">Alunos</label>
         <div
+          *ngIf="activeStudents().length === 0"
+          class="border border-input rounded-lg p-3 text-sm text-muted-foreground bg-muted/30"
+        >
+          Nenhum aluno ativo disponível
+        </div>
+        <div
+          *ngIf="activeStudents().length > 0"
           class="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto border border-input rounded-lg p-3"
         >
           <label
-            *ngFor="let s of activeStudents"
+            *ngFor="let student of activeStudents()"
             class="flex items-center gap-2 text-sm cursor-pointer hover:bg-muted/50 p-1 rounded transition-colors"
           >
-            <input type="checkbox" class="rounded border-input text-primary focus:ring-primary" />
-            <span class="truncate">{{ s.name }}</span>
+            <input
+              type="checkbox"
+              [checked]="selectedStudentIds().includes(student.id)"
+              (change)="toggleStudent(student.id, $any($event.target).checked)"
+              class="rounded border-input text-primary focus:ring-primary"
+            />
+            <span class="truncate">{{ student.nome }}</span>
           </label>
         </div>
       </div>
@@ -122,10 +184,11 @@
         Cancelar
       </button>
       <button
-        (click)="closeModal()"
+        (click)="saveWorkgroup()"
+        [disabled]="isSubmitting()"
         class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2"
       >
-        Criar Grupo
+        {{ isSubmitting() ? 'Criando...' : 'Criar Grupo' }}
       </button>
     </div>
   </div>

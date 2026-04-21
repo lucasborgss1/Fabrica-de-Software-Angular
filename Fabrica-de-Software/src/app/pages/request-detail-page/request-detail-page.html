@@ -1,4 +1,8 @@
-<div *ngIf="!project" class="flex flex-col items-center justify-center py-20">
+<div *ngIf="isLoading()" class="glass-card p-10 text-center text-muted-foreground">
+  Carregando solicitação...
+</div>
+
+<div *ngIf="!isLoading() && !project()" class="flex flex-col items-center justify-center py-20">
   <p class="text-muted-foreground">Projeto não encontrado</p>
   <button
     (click)="goBack()"
@@ -8,7 +12,7 @@
   </button>
 </div>
 
-<ng-container *ngIf="project">
+<ng-container *ngIf="project() as p">
   <div class="max-w-4xl mx-auto">
     <button
       (click)="goBack()"
@@ -17,28 +21,42 @@
       <lucide-icon [img]="ArrowLeft" class="h-4 w-4"></lucide-icon> Voltar
     </button>
 
+    <div
+      *ngIf="errorMessage()"
+      class="mb-4 rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive"
+    >
+      {{ errorMessage() }}
+    </div>
+
+    <div
+      *ngIf="successMessage()"
+      class="mb-4 rounded-lg border border-success/30 bg-success/10 p-3 text-sm text-success"
+    >
+      {{ successMessage() }}
+    </div>
+
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
       <div>
-        <h1 class="text-2xl font-bold">{{ project.name }}</h1>
-        <p class="text-muted-foreground mt-1">Solicitado por {{ project.professor }}</p>
+        <h1 class="text-2xl font-bold">{{ p.nome }}</h1>
+        <p class="text-muted-foreground mt-1">Solicitado por {{ p.nomeProfessorSolicitante }}</p>
       </div>
-      <app-status-badge [status]="project.status"></app-status-badge>
+      <app-status-badge [status]="p.statusProjeto"></app-status-badge>
     </div>
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
       <div class="glass-card p-5 space-y-4">
         <h3 class="font-semibold flex items-center gap-2">
           <lucide-icon [img]="FileText" class="h-4 w-4 text-primary"></lucide-icon>
-          Informações do Projeto
+          Informações principais
         </h3>
         <div class="space-y-3 text-sm">
           <div>
-            <span class="text-muted-foreground">Objetivo:</span>
-            <p class="mt-0.5">{{ project.objective }}</p>
+            <span class="text-muted-foreground">Nome do projeto:</span>
+            <p class="mt-0.5">{{ p.nome }}</p>
           </div>
           <div>
-            <span class="text-muted-foreground">Escopo:</span>
-            <p class="mt-0.5 whitespace-pre-wrap">{{ project.scope }}</p>
+            <span class="text-muted-foreground">Professor solicitante:</span>
+            <p class="mt-0.5">{{ p.nomeProfessorSolicitante }}</p>
           </div>
         </div>
       </div>
@@ -46,55 +64,72 @@
       <div class="glass-card p-5 space-y-4">
         <h3 class="font-semibold flex items-center gap-2">
           <lucide-icon [img]="Target" class="h-4 w-4 text-primary"></lucide-icon>
-          Detalhes
+          Detalhes disponíveis
         </h3>
         <div class="space-y-3 text-sm">
           <div class="flex items-center gap-2">
-            <lucide-icon [img]="Users" class="h-4 w-4 text-muted-foreground"></lucide-icon>
-            <span class="text-muted-foreground">Usuários alvo:</span> {{ project.targetUsers }}
-          </div>
-          <div class="flex items-center gap-2">
-            <lucide-icon [img]="MapPin" class="h-4 w-4 text-muted-foreground"></lucide-icon>
-            <span class="text-muted-foreground">Local:</span> {{ project.usageLocation }}
-          </div>
-          <div class="flex items-center gap-2">
             <lucide-icon [img]="Calendar" class="h-4 w-4 text-muted-foreground"></lucide-icon>
-            <span class="text-muted-foreground">Início previsto:</span>
-            {{ project.expectedStartDate }}
+            <span class="text-muted-foreground">Data de aprovação:</span>
+            {{ formatDate(p.dataAprovacao) }}
           </div>
-          <div><span class="text-muted-foreground">Tipo:</span> {{ project.type }}</div>
+          <div class="flex items-center gap-2">
+            <lucide-icon [img]="Users" class="h-4 w-4 text-muted-foreground"></lucide-icon>
+            <span class="text-muted-foreground">Grupo vinculado:</span>
+            {{ p.nomeGrupoVinculado || 'Nenhum grupo vinculado' }}
+          </div>
         </div>
       </div>
     </div>
 
-    <div *ngIf="group" class="glass-card p-5 mb-6">
+    <div *ngIf="group() as g" class="glass-card p-5 mb-6">
       <h3 class="font-semibold mb-3">Grupo de Trabalho</h3>
       <div class="text-sm space-y-2">
-        <p><span class="text-muted-foreground">Coordenador:</span> {{ group.coordinator }}</p>
+        <p>
+          <span class="text-muted-foreground">Coordenador:</span>
+          {{ g.nomeProfessorCoordenador }}
+        </p>
+        <p>
+          <span class="text-muted-foreground">Status do grupo:</span>
+          <app-status-badge [status]="g.statusGrupo"></app-status-badge>
+        </p>
         <p class="text-muted-foreground">Alunos:</p>
         <div class="flex flex-wrap gap-2">
-          <span *ngFor="let s of group.students" class="px-3 py-1 bg-muted rounded-full text-sm">
-            {{ s }}
+          <span
+            *ngFor="let student of g.nomesAlunos"
+            class="px-3 py-1 bg-muted rounded-full text-sm"
+          >
+            {{ student }}
           </span>
         </div>
       </div>
     </div>
 
-    <div *ngIf="auth.role() === 'admin' && project.status === 'Em análise'" class="glass-card p-5">
-      <h3 class="font-semibold mb-4">Ações</h3>
+    <div *ngIf="auth.role() === 'admin'" class="glass-card p-5">
+      <h3 class="font-semibold mb-4">Ações administrativas</h3>
       <div class="flex flex-wrap gap-3">
         <button
-          class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors bg-success text-success-foreground shadow hover:bg-success/90 h-9 px-4 py-2 gap-2"
+          (click)="analyzeProject()"
+          [disabled]="isProcessing() || !canAnalyze()"
+          [title]="
+            !canAnalyze() ? 'Só é possível colocar em análise quando o status for Solicitado' : ''
+          "
+          class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2 gap-2 disabled:pointer-events-none disabled:opacity-40"
+        >
+          <lucide-icon [img]="FileText" class="h-4 w-4"></lucide-icon> Colocar em análise
+        </button>
+        <button
+          (click)="approveProject()"
+          [disabled]="isProcessing() || !canApprove()"
+          [title]="!canApprove() ? 'Não é possível aprovar uma solicitação com o status atual' : ''"
+          class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors bg-success text-success-foreground shadow hover:bg-success/90 h-9 px-4 py-2 gap-2 disabled:pointer-events-none disabled:opacity-40"
         >
           <lucide-icon [img]="CheckCircle2" class="h-4 w-4"></lucide-icon> Aprovar
         </button>
         <button
-          class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90 h-9 px-4 py-2 gap-2"
-        >
-          <lucide-icon [img]="XCircle" class="h-4 w-4"></lucide-icon> Rejeitar
-        </button>
-        <button
-          class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2 gap-2"
+          (click)="cancelProject()"
+          [disabled]="isProcessing() || !canCancel()"
+          [title]="!canCancel() ? 'Não é possível cancelar uma solicitação com o status atual' : ''"
+          class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90 h-9 px-4 py-2 gap-2 disabled:pointer-events-none disabled:opacity-40"
         >
           <lucide-icon [img]="Ban" class="h-4 w-4"></lucide-icon> Cancelar
         </button>

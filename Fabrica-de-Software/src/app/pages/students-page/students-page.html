@@ -1,4 +1,4 @@
-<app-page-header title="Alunos" description="Gerenciar alunos cadastrados">
+<app-page-header title="Alunos" description="Gerenciar alunos cadastrados no backend">
   <button
     (click)="openModal()"
     class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground shadow hover:bg-primary/90 h-9 px-4 py-2 gap-2"
@@ -6,6 +6,20 @@
     <lucide-icon [img]="Plus" class="h-4 w-4"></lucide-icon> Novo Aluno
   </button>
 </app-page-header>
+
+<div
+  *ngIf="errorMessage()"
+  class="mb-4 rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive"
+>
+  {{ errorMessage() }}
+</div>
+
+<div
+  *ngIf="successMessage()"
+  class="mb-4 rounded-lg border border-success/30 bg-success/10 p-3 text-sm text-success"
+>
+  {{ successMessage() }}
+</div>
 
 <div class="glass-card overflow-hidden">
   <div class="p-4 border-b">
@@ -17,8 +31,9 @@
       <input
         type="text"
         placeholder="Buscar aluno..."
-        [(ngModel)]="searchQuery"
-        class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 pl-9"
+        [ngModel]="searchQuery()"
+        (ngModelChange)="searchQuery.set($event)"
+        class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 pl-9"
       />
     </div>
   </div>
@@ -28,49 +43,48 @@
       <thead>
         <tr class="border-b bg-muted/50">
           <th class="text-left px-6 py-3 font-medium text-muted-foreground">Nome</th>
+          <th class="text-left px-6 py-3 font-medium text-muted-foreground">Matrícula</th>
           <th class="text-left px-6 py-3 font-medium text-muted-foreground">Curso</th>
-          <th class="text-left px-6 py-3 font-medium text-muted-foreground">Turno</th>
-          <th class="text-left px-6 py-3 font-medium text-muted-foreground">Semestre</th>
+          <th class="text-left px-6 py-3 font-medium text-muted-foreground">E-mail</th>
+          <th class="text-left px-6 py-3 font-medium text-muted-foreground">Grupo</th>
           <th class="text-left px-6 py-3 font-medium text-muted-foreground">Status</th>
           <th class="text-right px-6 py-3 font-medium text-muted-foreground">Ações</th>
         </tr>
       </thead>
       <tbody>
+        <tr *ngIf="isLoading()">
+          <td colspan="7" class="px-6 py-8 text-center text-muted-foreground">
+            Carregando alunos...
+          </td>
+        </tr>
+        <tr *ngIf="!isLoading() && filteredStudents().length === 0">
+          <td colspan="7" class="px-6 py-8 text-center text-muted-foreground">
+            Nenhum aluno encontrado.
+          </td>
+        </tr>
         <tr
-          *ngFor="let s of filteredStudents"
+          *ngFor="let s of filteredStudents()"
           class="border-b last:border-0 hover:bg-muted/30 transition-colors"
         >
-          <td class="px-6 py-3 font-medium">{{ s.name }}</td>
-          <td class="px-6 py-3 text-muted-foreground">{{ s.course }}</td>
-          <td class="px-6 py-3 text-muted-foreground">{{ s.shift }}</td>
-          <td class="px-6 py-3 text-muted-foreground">{{ s.semester }}º</td>
+          <td class="px-6 py-3 font-medium">{{ s.nome }}</td>
+          <td class="px-6 py-3 text-muted-foreground">{{ s.matricula }}</td>
+          <td class="px-6 py-3 text-muted-foreground">{{ s.curso }}</td>
+          <td class="px-6 py-3 text-muted-foreground">{{ s.emailContato }}</td>
+          <td class="px-6 py-3 text-muted-foreground">{{ s.nomeGrupoTrabalho || 'Sem grupo' }}</td>
           <td class="px-6 py-3">
-            <app-status-badge [status]="s.status"></app-status-badge>
+            <app-status-badge [status]="s.statusAluno"></app-status-badge>
           </td>
           <td class="px-6 py-3 text-right">
-            <div class="flex items-center justify-end gap-1">
-              <button
-                (click)="openModal(s)"
-                class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground h-8 w-8"
-              >
-                <lucide-icon [img]="Pencil" class="h-4 w-4"></lucide-icon>
-              </button>
-              <button
-                (click)="toggleStatus(s.id)"
-                class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground h-8 w-8"
-              >
-                <lucide-icon
-                  *ngIf="s.status === 'active'"
-                  [img]="ToggleRight"
-                  class="h-4 w-4 text-success"
-                ></lucide-icon>
-                <lucide-icon
-                  *ngIf="s.status !== 'active'"
-                  [img]="ToggleLeft"
-                  class="h-4 w-4 text-muted-foreground"
-                ></lucide-icon>
-              </button>
-            </div>
+            <button
+              (click)="toggleStatus(s.id, s.statusAluno)"
+              class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground h-8 px-3 gap-2"
+            >
+              <lucide-icon
+                [img]="s.statusAluno === 'ATIVO' ? ToggleRight : ToggleLeft"
+                class="h-4 w-4"
+              ></lucide-icon>
+              {{ s.statusAluno === 'ATIVO' ? 'Inativar' : 'Inativo' }}
+            </button>
           </td>
         </tr>
       </tbody>
@@ -78,19 +92,17 @@
   </div>
 </div>
 
-<div *ngIf="isModalOpen" class="relative z-50">
+<div *ngIf="isModalOpen()" class="relative z-50">
   <div
     class="fixed inset-0 bg-background/80 backdrop-blur-sm transition-all"
     (click)="closeModal()"
   ></div>
 
   <div
-    class="fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg sm:rounded-lg"
+    class="fixed left-[50%] top-[50%] z-50 grid w-full max-w-3xl translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg sm:rounded-lg max-h-[90vh] overflow-y-auto"
   >
     <div class="flex flex-col space-y-1.5 text-center sm:text-left">
-      <h2 class="text-lg font-semibold leading-none tracking-tight">
-        {{ editing ? 'Editar Aluno' : 'Novo Aluno' }}
-      </h2>
+      <h2 class="text-lg font-semibold leading-none tracking-tight">Novo Aluno</h2>
       <button
         (click)="closeModal()"
         class="absolute right-4 top-4 rounded-sm opacity-70 transition-opacity hover:opacity-100 focus:outline-none"
@@ -100,56 +112,157 @@
       </button>
     </div>
 
-    <div class="grid grid-cols-2 gap-4 py-4">
-      <div class="space-y-2 col-span-2">
-        <label class="text-sm font-medium leading-none">Nome completo</label>
+    <div
+      *ngIf="errorMessage()"
+      class="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive"
+    >
+      {{ errorMessage() }}
+    </div>
+
+    <div
+      *ngIf="successMessage()"
+      class="rounded-lg border border-success/30 bg-success/10 p-3 text-sm text-success"
+    >
+      {{ successMessage() }}
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 py-2">
+      <div class="space-y-2 md:col-span-2">
+        <label class="text-sm font-medium leading-none"
+          >Nome completo <span class="text-destructive">*</span></label
+        >
         <input
+          [(ngModel)]="form.nome"
           type="text"
-          [value]="editing?.name || ''"
-          placeholder="Nome do aluno"
-          class="flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+          class="flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm"
         />
       </div>
+
       <div class="space-y-2">
-        <label class="text-sm font-medium leading-none">Matrícula</label>
+        <label class="text-sm font-medium leading-none"
+          >Matrícula <span class="text-destructive">*</span></label
+        >
         <input
+          [(ngModel)]="form.matricula"
           type="text"
-          [value]="editing?.enrollment || ''"
-          placeholder="2023001"
-          class="flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+          class="flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm"
         />
       </div>
+
       <div class="space-y-2">
-        <label class="text-sm font-medium leading-none">Curso</label>
+        <label class="text-sm font-medium leading-none"
+          >E-mail <span class="text-destructive">*</span></label
+        >
         <input
-          type="text"
-          [value]="editing?.course || ''"
-          placeholder="Ciência da Computação"
-          class="flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+          [(ngModel)]="form.emailContato"
+          type="email"
+          class="flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm"
         />
       </div>
+
+      <div class="space-y-2">
+        <label class="text-sm font-medium leading-none">WhatsApp</label>
+        <input
+          [(ngModel)]="form.whatsapp"
+          type="text"
+          class="flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm"
+        />
+      </div>
+
+      <div class="space-y-2">
+        <label class="text-sm font-medium leading-none"
+          >Curso <span class="text-destructive">*</span></label
+        >
+        <input
+          [(ngModel)]="form.curso"
+          type="text"
+          class="flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm"
+        />
+      </div>
+
       <div class="space-y-2">
         <label class="text-sm font-medium leading-none">Turno</label>
         <select
-          class="flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+          [(ngModel)]="form.turno"
+          class="flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm"
         >
-          <option value="">Selecione</option>
-          <option [selected]="editing?.shift === 'Manhã'">Manhã</option>
-          <option [selected]="editing?.shift === 'Tarde'">Tarde</option>
-          <option [selected]="editing?.shift === 'Noite'">Noite</option>
+          <option *ngFor="let turno of turnoOptions" [value]="turno">{{ turno }}</option>
         </select>
       </div>
+
       <div class="space-y-2">
-        <label class="text-sm font-medium leading-none">Semestre</label>
+        <label class="text-sm font-medium leading-none">Data de seleção</label>
         <input
-          type="number"
-          [value]="editing?.semester || ''"
-          placeholder="1"
-          min="1"
-          max="10"
-          class="flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+          [(ngModel)]="form.dataSelecao"
+          type="datetime-local"
+          class="flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm"
         />
       </div>
+
+      <div class="space-y-2">
+        <label class="text-sm font-medium leading-none">LinkedIn</label>
+        <input
+          [(ngModel)]="form.linkLinkedin"
+          type="url"
+          class="flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm"
+        />
+      </div>
+
+      <div class="space-y-2">
+        <label class="text-sm font-medium leading-none">GitHub</label>
+        <input
+          [(ngModel)]="form.linkGithub"
+          type="url"
+          class="flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm"
+        />
+      </div>
+
+      <div class="space-y-2">
+        <label class="text-sm font-medium leading-none">Horas semanais</label>
+        <input
+          [(ngModel)]="form.horasSemanais"
+          type="number"
+          min="1"
+          class="flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm"
+        />
+      </div>
+
+      <div class="space-y-2 md:col-span-2">
+        <label class="text-sm font-medium leading-none">Disciplinas cursadas</label>
+        <input
+          [(ngModel)]="form.disciplinasCursadas"
+          type="text"
+          placeholder="Separadas por vírgula"
+          class="flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm"
+        />
+      </div>
+
+      <div class="space-y-2 md:col-span-2">
+        <label class="text-sm font-medium leading-none"
+          >Senha <span class="text-destructive">*</span></label
+        >
+        <input
+          [(ngModel)]="form.senha"
+          type="password"
+          class="flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm"
+        />
+      </div>
+    </div>
+
+    <div class="flex flex-wrap gap-4 rounded-lg border border-input p-3">
+      <label class="text-sm font-medium leading-none">Areas de Interesse:</label>
+      <label
+        *ngFor="let area of areaInteresseOptions"
+        class="flex items-center gap-2 text-sm cursor-pointer"
+      >
+        <input
+          type="checkbox"
+          [checked]="form.areasDeInteresse.includes(area)"
+          (change)="toggleArea(area, $any($event.target).checked)"
+          class="h-4 w-4 accent-primary"
+        />
+        <span>{{ formatArea(area) }}</span>
+      </label>
     </div>
 
     <div class="flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2">
@@ -160,10 +273,11 @@
         Cancelar
       </button>
       <button
-        (click)="closeModal()"
+        (click)="saveStudent()"
+        [disabled]="isSubmitting()"
         class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors bg-primary text-primary-foreground shadow hover:bg-primary/90 h-10 px-4 py-2"
       >
-        Salvar
+        {{ isSubmitting() ? 'Salvando...' : 'Salvar' }}
       </button>
     </div>
   </div>

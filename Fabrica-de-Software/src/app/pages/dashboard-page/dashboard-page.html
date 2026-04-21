@@ -1,181 +1,210 @@
 <ng-container *ngIf="authService.role() === 'admin'">
   <app-page-header title="Dashboard" description="Visão geral do sistema"></app-page-header>
 
-  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-    <div class="kpi-card animate-fade-in">
-      <div class="flex items-center justify-between">
-        <span class="text-sm text-muted-foreground">Em análise</span>
-        <div
-          class="w-10 h-10 rounded-xl flex items-center justify-center bg-warning/10 text-warning"
-        >
-          <lucide-icon [img]="Clock" class="w-5 h-5"></lucide-icon>
-        </div>
-      </div>
-      <span class="text-3xl font-bold">{{ analysisCount }}</span>
-    </div>
-
-    <div class="kpi-card animate-fade-in">
-      <div class="flex items-center justify-between">
-        <span class="text-sm text-muted-foreground">Aprovados</span>
-        <div
-          class="w-10 h-10 rounded-xl flex items-center justify-center bg-success/10 text-success"
-        >
-          <lucide-icon [img]="CheckCircle2" class="w-5 h-5"></lucide-icon>
-        </div>
-      </div>
-      <span class="text-3xl font-bold">{{ approvedCount }}</span>
-    </div>
-
-    <div class="kpi-card animate-fade-in">
-      <div class="flex items-center justify-between">
-        <span class="text-sm text-muted-foreground">Rejeitados/Cancelados</span>
-        <div
-          class="w-10 h-10 rounded-xl flex items-center justify-center bg-destructive/10 text-destructive"
-        >
-          <lucide-icon [img]="XCircle" class="w-5 h-5"></lucide-icon>
-        </div>
-      </div>
-      <span class="text-3xl font-bold">{{ rejectedCount }}</span>
-    </div>
-
-    <div class="kpi-card animate-fade-in">
-      <div class="flex items-center justify-between">
-        <span class="text-sm text-muted-foreground">Total professores</span>
-        <div
-          class="w-10 h-10 rounded-xl flex items-center justify-center bg-primary/10 text-primary"
-        >
-          <lucide-icon [img]="Users" class="w-5 h-5"></lucide-icon>
-        </div>
-      </div>
-      <span class="text-3xl font-bold">{{ professorsCount }}</span>
-    </div>
+  <div
+    *ngIf="errorMessage()"
+    class="mb-4 rounded-lg border border-warning/30 bg-warning/10 p-3 text-sm text-warning"
+  >
+    {{ errorMessage() }}
   </div>
 
-  <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
-    <div class="kpi-card animate-fade-in">
-      <div class="flex items-center justify-between">
-        <span class="text-sm text-muted-foreground">Total alunos</span>
-        <div class="w-10 h-10 rounded-xl flex items-center justify-center bg-info/10 text-info">
-          <lucide-icon [img]="GraduationCap" class="w-5 h-5"></lucide-icon>
-        </div>
-      </div>
-      <span class="text-3xl font-bold">{{ studentsCount }}</span>
-    </div>
-
-    <div class="kpi-card animate-fade-in">
-      <div class="flex items-center justify-between">
-        <span class="text-sm text-muted-foreground">Grupos de trabalho</span>
-        <div
-          class="w-10 h-10 rounded-xl flex items-center justify-center bg-primary/10 text-primary"
-        >
-          <lucide-icon [img]="FolderKanban" class="w-5 h-5"></lucide-icon>
-        </div>
-      </div>
-      <span class="text-3xl font-bold">{{ workgroupsCount }}</span>
-    </div>
-
-    <div class="kpi-card animate-fade-in">
-      <div class="flex items-center justify-between">
-        <span class="text-sm text-muted-foreground">Total solicitações</span>
-        <div
-          class="w-10 h-10 rounded-xl flex items-center justify-center bg-muted text-muted-foreground"
-        >
-          <lucide-icon [img]="FileText" class="w-5 h-5"></lucide-icon>
-        </div>
-      </div>
-      <span class="text-3xl font-bold">{{ projectRequests.length }}</span>
-    </div>
+  <div *ngIf="isLoading()" class="glass-card p-8 text-center text-muted-foreground">
+    Carregando indicadores...
   </div>
 
-  <div class="glass-card overflow-hidden">
-    <div class="px-6 py-4 border-b">
-      <h2 class="font-semibold">Solicitações recentes</h2>
-    </div>
-    <div class="overflow-x-auto">
-      <table class="w-full text-sm">
-        <thead>
-          <tr class="border-b bg-muted/50">
-            <th class="text-left px-6 py-3 font-medium text-muted-foreground">Projeto</th>
-            <th class="text-left px-6 py-3 font-medium text-muted-foreground">Professor</th>
-            <th class="text-left px-6 py-3 font-medium text-muted-foreground">Data</th>
-            <th class="text-left px-6 py-3 font-medium text-muted-foreground">Status</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr
-            *ngFor="let pr of projectRequests | slice: 0 : 5"
-            (click)="navigateToRequest(pr.id)"
-            class="border-b last:border-0 hover:bg-muted/30 cursor-pointer transition-colors"
+  <ng-container *ngIf="!isLoading()">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <div class="kpi-card animate-fade-in">
+        <div class="flex items-center justify-between">
+          <span class="text-sm text-muted-foreground">Pendentes</span>
+          <div
+            class="w-10 h-10 rounded-xl flex items-center justify-center bg-warning/10 text-warning"
           >
-            <td class="px-6 py-3 font-medium">{{ pr.name }}</td>
-            <td class="px-6 py-3 text-muted-foreground">{{ pr.professor }}</td>
-            <td class="px-6 py-3 text-muted-foreground">{{ pr.createdAt }}</td>
-            <td class="px-6 py-3">
-              <app-status-badge [status]="pr.status"></app-status-badge>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+            <lucide-icon [img]="Clock" class="w-5 h-5"></lucide-icon>
+          </div>
+        </div>
+        <span class="text-3xl font-bold">{{ pendingCount() }}</span>
+      </div>
+
+      <div class="kpi-card animate-fade-in">
+        <div class="flex items-center justify-between">
+          <span class="text-sm text-muted-foreground">Aprovados</span>
+          <div
+            class="w-10 h-10 rounded-xl flex items-center justify-center bg-success/10 text-success"
+          >
+            <lucide-icon [img]="CheckCircle2" class="w-5 h-5"></lucide-icon>
+          </div>
+        </div>
+        <span class="text-3xl font-bold">{{ approvedCount() }}</span>
+      </div>
+
+      <div class="kpi-card animate-fade-in">
+        <div class="flex items-center justify-between">
+          <span class="text-sm text-muted-foreground">Não aprovados</span>
+          <div
+            class="w-10 h-10 rounded-xl flex items-center justify-center bg-destructive/10 text-destructive"
+          >
+            <lucide-icon [img]="XCircle" class="w-5 h-5"></lucide-icon>
+          </div>
+        </div>
+        <span class="text-3xl font-bold">{{ rejectedCount() }}</span>
+      </div>
+
+      <div class="kpi-card animate-fade-in">
+        <div class="flex items-center justify-between">
+          <span class="text-sm text-muted-foreground">Total professores</span>
+          <div
+            class="w-10 h-10 rounded-xl flex items-center justify-center bg-primary/10 text-primary"
+          >
+            <lucide-icon [img]="Users" class="w-5 h-5"></lucide-icon>
+          </div>
+        </div>
+        <span class="text-3xl font-bold">{{ professorsCount() }}</span>
+      </div>
     </div>
-  </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+      <div class="kpi-card animate-fade-in">
+        <div class="flex items-center justify-between">
+          <span class="text-sm text-muted-foreground">Total alunos</span>
+          <div class="w-10 h-10 rounded-xl flex items-center justify-center bg-info/10 text-info">
+            <lucide-icon [img]="GraduationCap" class="w-5 h-5"></lucide-icon>
+          </div>
+        </div>
+        <span class="text-3xl font-bold">{{ studentsCount() }}</span>
+      </div>
+
+      <div class="kpi-card animate-fade-in">
+        <div class="flex items-center justify-between">
+          <span class="text-sm text-muted-foreground">Grupos de trabalho</span>
+          <div
+            class="w-10 h-10 rounded-xl flex items-center justify-center bg-primary/10 text-primary"
+          >
+            <lucide-icon [img]="FolderKanban" class="w-5 h-5"></lucide-icon>
+          </div>
+        </div>
+        <span class="text-3xl font-bold">{{ workgroupsCount() }}</span>
+      </div>
+
+      <div class="kpi-card animate-fade-in">
+        <div class="flex items-center justify-between">
+          <span class="text-sm text-muted-foreground">Total solicitações</span>
+          <div
+            class="w-10 h-10 rounded-xl flex items-center justify-center bg-muted text-muted-foreground"
+          >
+            <lucide-icon [img]="FileText" class="w-5 h-5"></lucide-icon>
+          </div>
+        </div>
+        <span class="text-3xl font-bold">{{ projectRequests().length }}</span>
+      </div>
+    </div>
+
+    <div class="glass-card overflow-hidden">
+      <div class="px-6 py-4 border-b">
+        <h2 class="font-semibold">Solicitações recentes</h2>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="border-b bg-muted/50">
+              <th class="text-left px-6 py-3 font-medium text-muted-foreground">Projeto</th>
+              <th class="text-left px-6 py-3 font-medium text-muted-foreground">Professor</th>
+              <th class="text-left px-6 py-3 font-medium text-muted-foreground">Aprovação</th>
+              <th class="text-left px-6 py-3 font-medium text-muted-foreground">Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              *ngFor="let pr of projectRequests() | slice: 0 : 5"
+              (click)="navigateToRequest(pr)"
+              class="border-b last:border-0 hover:bg-muted/30 cursor-pointer transition-colors"
+            >
+              <td class="px-6 py-3 font-medium">{{ pr.nome }}</td>
+              <td class="px-6 py-3 text-muted-foreground">{{ pr.nomeProfessorSolicitante }}</td>
+              <td class="px-6 py-3 text-muted-foreground">{{ formatDate(pr.dataAprovacao) }}</td>
+              <td class="px-6 py-3">
+                <app-status-badge [status]="pr.statusProjeto"></app-status-badge>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </ng-container>
 </ng-container>
 
 <ng-container *ngIf="authService.role() === 'professor'">
-  <app-page-header title="Dashboard" description="Visão geral dos seus projetos"></app-page-header>
+  <app-page-header
+    title="Dashboard"
+    description="Visão geral das suas solicitações"
+  ></app-page-header>
 
-  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-    <div class="kpi-card animate-fade-in">
-      <div class="flex items-center justify-between">
-        <span class="text-sm text-muted-foreground">Projetos enviados</span>
-        <div
-          class="w-10 h-10 rounded-xl flex items-center justify-center bg-primary/10 text-primary"
-        >
-          <lucide-icon [img]="FileText" class="w-5 h-5"></lucide-icon>
-        </div>
-      </div>
-      <span class="text-3xl font-bold">{{ submittedCount }}</span>
-    </div>
-
-    <div class="kpi-card animate-fade-in">
-      <div class="flex items-center justify-between">
-        <span class="text-sm text-muted-foreground">Em andamento</span>
-        <div
-          class="w-10 h-10 rounded-xl flex items-center justify-center bg-success/10 text-success"
-        >
-          <lucide-icon [img]="FolderKanban" class="w-5 h-5"></lucide-icon>
-        </div>
-      </div>
-      <span class="text-3xl font-bold">{{ inProgressCount }}</span>
-    </div>
+  <div
+    *ngIf="errorMessage()"
+    class="mb-4 rounded-lg border border-warning/30 bg-warning/10 p-3 text-sm text-warning"
+  >
+    {{ errorMessage() }}
   </div>
 
-  <div class="glass-card overflow-hidden">
-    <div class="px-6 py-4 border-b">
-      <h2 class="font-semibold">Minhas solicitações</h2>
-    </div>
-    <div class="overflow-x-auto">
-      <table class="w-full text-sm">
-        <thead>
-          <tr class="border-b bg-muted/50">
-            <th class="text-left px-6 py-3 font-medium text-muted-foreground">Projeto</th>
-            <th class="text-left px-6 py-3 font-medium text-muted-foreground">Data</th>
-            <th class="text-left px-6 py-3 font-medium text-muted-foreground">Status</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr
-            *ngFor="let pr of myRequests"
-            (click)="navigateToRequest(pr.id)"
-            class="border-b last:border-0 hover:bg-muted/30 cursor-pointer transition-colors"
+  <div *ngIf="isLoading()" class="glass-card p-8 text-center text-muted-foreground">
+    Carregando solicitações...
+  </div>
+
+  <ng-container *ngIf="!isLoading()">
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+      <div class="kpi-card animate-fade-in">
+        <div class="flex items-center justify-between">
+          <span class="text-sm text-muted-foreground">Projetos enviados</span>
+          <div
+            class="w-10 h-10 rounded-xl flex items-center justify-center bg-primary/10 text-primary"
           >
-            <td class="px-6 py-3 font-medium">{{ pr.name }}</td>
-            <td class="px-6 py-3 text-muted-foreground">{{ pr.createdAt }}</td>
-            <td class="px-6 py-3">
-              <app-status-badge [status]="pr.status"></app-status-badge>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+            <lucide-icon [img]="FileText" class="w-5 h-5"></lucide-icon>
+          </div>
+        </div>
+        <span class="text-3xl font-bold">{{ submittedCount() }}</span>
+      </div>
+
+      <div class="kpi-card animate-fade-in">
+        <div class="flex items-center justify-between">
+          <span class="text-sm text-muted-foreground">Pendentes</span>
+          <div
+            class="w-10 h-10 rounded-xl flex items-center justify-center bg-success/10 text-success"
+          >
+            <lucide-icon [img]="FolderKanban" class="w-5 h-5"></lucide-icon>
+          </div>
+        </div>
+        <span class="text-3xl font-bold">{{ inProgressCount() }}</span>
+      </div>
     </div>
-  </div>
+
+    <div class="glass-card overflow-hidden">
+      <div class="px-6 py-4 border-b">
+        <h2 class="font-semibold">Minhas solicitações</h2>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="border-b bg-muted/50">
+              <th class="text-left px-6 py-3 font-medium text-muted-foreground">Projeto</th>
+              <th class="text-left px-6 py-3 font-medium text-muted-foreground">Aprovação</th>
+              <th class="text-left px-6 py-3 font-medium text-muted-foreground">Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              *ngFor="let pr of myRequests()"
+              (click)="navigateToRequest(pr)"
+              class="border-b last:border-0 hover:bg-muted/30 cursor-pointer transition-colors"
+            >
+              <td class="px-6 py-3 font-medium">{{ pr.nome }}</td>
+              <td class="px-6 py-3 text-muted-foreground">{{ formatDate(pr.dataAprovacao) }}</td>
+              <td class="px-6 py-3">
+                <app-status-badge [status]="pr.statusProjeto"></app-status-badge>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </ng-container>
 </ng-container>
