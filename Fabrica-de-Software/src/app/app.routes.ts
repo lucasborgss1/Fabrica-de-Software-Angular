@@ -1,6 +1,10 @@
 // src/app/app.routes.ts
 import { Routes } from '@angular/router';
 
+import { adminGuard } from './core/guards/admin.guard';
+import { authGuard } from './core/guards/auth.guard';
+import { loginGuard } from './core/guards/login.guard';
+
 export const routes: Routes = [
   {
     path: '',
@@ -9,10 +13,12 @@ export const routes: Routes = [
   },
   {
     path: 'login',
+    canActivate: [loginGuard],
     loadComponent: () => import('./pages/login-page/login-page').then((m) => m.LoginPage),
   },
   {
     path: '',
+    canActivate: [authGuard],
     loadComponent: () =>
       import('./components/layout/app-layout/app-layout').then((m) => m.AppLayout),
     children: [
@@ -23,11 +29,13 @@ export const routes: Routes = [
       },
       {
         path: 'professors',
+        canActivate: [adminGuard],
         loadComponent: () =>
           import('./pages/professors-page/professors-page').then((m) => m.ProfessorsPage),
       },
       {
         path: 'students',
+        canActivate: [adminGuard],
         loadComponent: () =>
           import('./pages/students-page/students-page').then((m) => m.StudentsPage),
       },

@@ -39,36 +39,23 @@ export class RequestsPage implements OnInit {
   readonly isLoading = signal(true);
   readonly isSubmitting = signal(false);
   readonly errorMessage = signal('');
+  readonly formErrorMessage = signal('');
   readonly successMessage = signal('');
   readonly requestProfessorId = signal('');
   readonly allRequests = signal<ProjectSummary[]>([]);
 
   newRequest: CreateProjectPayload = this.createEmptyRequest();
 
-  readonly roleBasedRequests = computed(() => {
-    if (this.auth.role() !== 'professor') {
-      return this.allRequests();
-    }
-
-    const userName = this.auth.userName().trim().toLowerCase();
-
-    if (!userName || userName === 'usuário') {
-      return this.allRequests();
-    }
-
-    return this.allRequests().filter((p) =>
-      p.nomeProfessorSolicitante.toLowerCase().includes(userName),
-    );
-  });
-
   readonly filteredRequests = computed(() => {
     const query = this.searchQuery().toLowerCase();
 
-    return this.roleBasedRequests().filter(
-      (p) =>
-        p.nome.toLowerCase().includes(query) ||
-        p.nomeProfessorSolicitante.toLowerCase().includes(query),
-    );
+    return this.allRequests()
+      .filter((p) => this.auth.role() !== 'professor' || p.statusProjeto === 'SOLICITADO')
+      .filter(
+        (p) =>
+          p.nome.toLowerCase().includes(query) ||
+          p.nomeProfessorSolicitante.toLowerCase().includes(query),
+      );
   });
 
   async ngOnInit() {
@@ -79,22 +66,13 @@ export class RequestsPage implements OnInit {
     this.isLoading.set(true);
     this.errorMessage.set('');
 
+    const projectsRequest =
+      this.auth.role() === 'professor' ? this.api.listMyProjects() : this.api.listProjects();
+
     try {
-      this.allRequests.set(await firstValueFrom(this.api.listProjects()));
+      this.allRequests.set(await firstValueFrom(projectsRequest));
     } catch (error: unknown) {
       this.allRequests.set([]);
-
-      if (
-        error instanceof HttpErrorResponse &&
-        (error.status === 500 || error.status === 403) &&
-        this.auth.role() === 'professor'
-      ) {
-        this.errorMessage.set(
-          'A documentação informa que a listagem completa de projetos é restrita ao perfil ADMIN. O envio de novas solicitações continua disponível para PROFESSOR.',
-        );
-      } else {
-        this.errorMessage.set(this.extractErrorMessage(error));
-      }
     } finally {
       this.isLoading.set(false);
     }
@@ -108,7 +86,7 @@ export class RequestsPage implements OnInit {
     this.newRequest = this.createEmptyRequest();
     this.requestProfessorId.set(this.auth.professorId());
     this.successMessage.set('');
-    this.errorMessage.set('');
+    this.formErrorMessage.set('');
     this.isNewRequestOpen.set(true);
   }
 
@@ -117,7 +95,7 @@ export class RequestsPage implements OnInit {
   }
 
   resetFormErrors() {
-    this.errorMessage.set('');
+    this.formErrorMessage.set('');
     this.successMessage.set('');
   }
 
@@ -128,72 +106,65 @@ export class RequestsPage implements OnInit {
   async submitNewRequest() {
     const r = this.newRequest;
     if (!r.nome.trim()) {
-      this.errorMessage.set('O campo "Nome do projeto" é obrigatório.');
+      this.formErrorMessage.set('O campo "Nome do projeto" é obrigatório.');
       return;
     }
     if (r.nome.trim().length < 3) {
-      this.errorMessage.set('O campo "Nome do projeto" deve ter pelo menos 3 caracteres.');
+      this.formErrorMessage.set('O campo "Nome do projeto" deve ter pelo menos 3 caracteres.');
       return;
     }
     if (!r.objetivo.trim()) {
-      this.errorMessage.set('O campo "Objetivo" é obrigatório.');
+      this.formErrorMessage.set('O campo "Objetivo" é obrigatório.');
       return;
     }
     if (r.objetivo.trim().length < 10) {
-      this.errorMessage.set('O campo "Objetivo" deve ter pelo menos 10 caracteres.');
+      this.formErrorMessage.set('O campo "Objetivo" deve ter pelo menos 10 caracteres.');
       return;
     }
     if (!r.quemIraUtilizar.trim()) {
-      this.errorMessage.set('O campo "Quem irá utilizar" é obrigatório.');
+      this.formErrorMessage.set('O campo "Quem irá utilizar" é obrigatório.');
       return;
     }
     if (!r.publicoAlvo.trim()) {
-      this.errorMessage.set('O campo "Público-alvo" é obrigatório.');
+      this.formErrorMessage.set('O campo "Público-alvo" é obrigatório.');
       return;
     }
     if (!r.localUso.trim()) {
-      this.errorMessage.set('O campo "Local de uso" é obrigatório.');
+      this.formErrorMessage.set('O campo "Local de uso" é obrigatório.');
       return;
     }
     if (!r.dataInicioEstimativa) {
-      this.errorMessage.set('A "Data estimada de início" é obrigatória.');
+      this.formErrorMessage.set('A "Data estimada de início" é obrigatória.');
       return;
     }
     if (isNaN(new Date(r.dataInicioEstimativa).getTime())) {
-      this.errorMessage.set('A "Data estimada de início" informada é inválida.');
+      this.formErrorMessage.set('A "Data estimada de início" informada é inválida.');
       return;
     }
     if (!r.escopo.trim()) {
-      this.errorMessage.set('O campo "Escopo" é obrigatório.');
+      this.formErrorMessage.set('O campo "Escopo" é obrigatório.');
       return;
     }
     if (r.escopo.trim().length < 10) {
-      this.errorMessage.set('O campo "Escopo" deve ter pelo menos 10 caracteres.');
+      this.formErrorMessage.set('O campo "Escopo" deve ter pelo menos 10 caracteres.');
       return;
     }
 
     const professorId = this.auth.professorId() || this.requestProfessorId().trim();
 
-    if (!professorId) {
-      this.errorMessage.set(
-        'Informe o ID do professor no formulário para enviar a solicitação ao endpoint de projetos.',
-      );
-      return;
-    }
-
     this.isSubmitting.set(true);
-    this.errorMessage.set('');
+    this.formErrorMessage.set('');
     this.successMessage.set('');
     this.auth.setProfessorId(professorId);
 
     try {
-      await firstValueFrom(this.api.requestProject(professorId, this.newRequest));
+      await firstValueFrom(this.api.requestProject(this.newRequest));
       this.successMessage.set('Solicitação enviada com sucesso.');
       this.clearForm();
       this.closeNewRequest();
       await this.loadRequests();
     } catch (error: unknown) {
-      this.errorMessage.set(this.extractErrorMessage(error));
+      this.formErrorMessage.set(this.extractSubmitErrorMessage(error));
     } finally {
       this.isSubmitting.set(false);
     }
@@ -216,15 +187,12 @@ export class RequestsPage implements OnInit {
     };
   }
 
-  private extractErrorMessage(error: unknown): string {
+  private extractSubmitErrorMessage(error: unknown): string {
     if (error instanceof HttpErrorResponse) {
       const apiMessage = error.error?.message || error.error?.error;
-      return (
-        apiMessage ||
-        'Não foi possível carregar os dados da API. Verifique login, senha e o backend em http://localhost:8083.'
-      );
+      return apiMessage || `Não foi possível enviar a solicitação. Código: ${error.status}.`;
     }
 
-    return 'Ocorreu um erro inesperado ao comunicar com o backend.';
+    return 'Ocorreu um erro inesperado ao enviar a solicitação.';
   }
 }

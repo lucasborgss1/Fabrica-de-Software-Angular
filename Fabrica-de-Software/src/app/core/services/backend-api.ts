@@ -84,9 +84,16 @@ export class BackendApi {
     );
   }
 
-  requestProject(professorId: string, payload: CreateProjectPayload): Observable<ProjectSummary> {
+  listMyProjects(): Observable<ProjectSummary[]> {
+    return this.http.get<ProjectSummary[]>(
+      `${this.baseUrl}/api/projetos/meus-projetos`,
+      this.getHttpOptions(),
+    );
+  }
+
+  requestProject(payload: CreateProjectPayload): Observable<ProjectSummary> {
     return this.http.post<ProjectSummary>(
-      `${this.baseUrl}/api/projetos/solicitar/${professorId}`,
+      `${this.baseUrl}/api/projetos/solicitar`,
       payload,
       this.getHttpOptions(),
     );

@@ -28,7 +28,7 @@ import { Auth } from '../../core/services/auth';
 export class DashboardPage implements OnInit {
   private router = inject(Router);
   private api = inject(BackendApi);
-  public authService = inject(Auth);
+  public auth = inject(Auth);
 
   readonly Clock = Clock;
   readonly CheckCircle2 = CheckCircle2;
@@ -65,17 +65,7 @@ export class DashboardPage implements OnInit {
     () => this.projectRequests().filter((p) => p.statusProjeto === 'NAO_APROVADO').length,
   );
 
-  readonly myRequests = computed(() => {
-    const userName = this.authService.userName().trim().toLowerCase();
-
-    if (!userName || userName === 'usuário') {
-      return this.projectRequests();
-    }
-
-    return this.projectRequests().filter((p) =>
-      p.nomeProfessorSolicitante.toLowerCase().includes(userName),
-    );
-  });
+  readonly myRequests = computed(() => this.projectRequests());
 
   readonly submittedCount = computed(() => this.myRequests().length);
 
@@ -94,9 +84,12 @@ export class DashboardPage implements OnInit {
     this.isLoading.set(true);
     this.errorMessage.set('');
 
+    const projectsRequest =
+      this.auth.role() === 'professor' ? this.api.listMyProjects() : this.api.listProjects();
+
     try {
       const [projects, professors, students, workgroups] = await Promise.all([
-        firstValueFrom(this.api.listProjects()).catch(() => [] as ProjectSummary[]),
+        firstValueFrom(projectsRequest).catch(() => [] as ProjectSummary[]),
         firstValueFrom(this.api.listProfessors()).catch(() => []),
         firstValueFrom(this.api.listStudents()).catch(() => []),
         firstValueFrom(this.api.listWorkgroups()).catch(() => []),
@@ -107,7 +100,7 @@ export class DashboardPage implements OnInit {
       this.studentsCount.set(students.length);
       this.workgroupsCount.set(workgroups.length);
 
-      if (!this.authService.token()) {
+      if (!this.auth.token()) {
         this.errorMessage.set(
           'Informe login e senha válidos na tela inicial para carregar os dados do backend.',
         );

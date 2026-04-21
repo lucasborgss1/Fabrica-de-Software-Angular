@@ -31,28 +31,9 @@ export class ProjectsPage implements OnInit {
   readonly errorMessage = signal('');
 
   // Convertido de 'get' para 'computed'
-  readonly myProjects = computed(() => {
-    const activeProjects = this.projects().filter(
-      (project) =>
-        project.statusProjeto === 'APROVADO' ||
-        project.statusProjeto === 'FINALIZADO' ||
-        project.statusProjeto === 'EM_ANALISE',
-    );
-
-    if (this.auth.role() !== 'professor') {
-      return activeProjects;
-    }
-
-    const userName = this.auth.userName().trim().toLowerCase();
-
-    if (!userName || userName === 'usuário') {
-      return activeProjects;
-    }
-
-    return activeProjects.filter((project) =>
-      project.nomeProfessorSolicitante.toLowerCase().includes(userName),
-    );
-  });
+  readonly myProjects = computed(() =>
+    this.projects().filter((project) => project.statusProjeto !== 'SOLICITADO'),
+  );
 
   async ngOnInit() {
     await this.loadProjects();
@@ -62,9 +43,12 @@ export class ProjectsPage implements OnInit {
     this.isLoading.set(true);
     this.errorMessage.set('');
 
+    const projectsRequest =
+      this.auth.role() === 'professor' ? this.api.listMyProjects() : this.api.listProjects();
+
     try {
       const [projectsData, workgroupsData] = await Promise.all([
-        firstValueFrom(this.api.listProjects()),
+        firstValueFrom(projectsRequest),
         firstValueFrom(this.api.listWorkgroups()).catch(() => [] as WorkgroupSummary[]),
       ]);
 

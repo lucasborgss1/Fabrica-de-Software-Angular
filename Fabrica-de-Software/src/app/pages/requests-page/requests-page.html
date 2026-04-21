@@ -123,10 +123,10 @@
     </div>
 
     <div
-      *ngIf="errorMessage()"
+      *ngIf="formErrorMessage()"
       class="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive"
     >
-      {{ errorMessage() }}
+      {{ formErrorMessage() }}
     </div>
 
     <div
@@ -202,17 +202,6 @@
         </select>
       </div>
 
-      <div class="space-y-2 md:col-span-2" *ngIf="auth.role() === 'professor'">
-        <label class="text-sm font-medium leading-none">ID do professor</label>
-        <input
-          [ngModel]="requestProfessorId()"
-          (ngModelChange)="requestProfessorId.set($event)"
-          type="text"
-          placeholder="UUID do professor"
-          class="flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm"
-        />
-      </div>
-
       <div class="space-y-2 md:col-span-2">
         <label class="text-sm font-medium leading-none"
           >Data estimada de início<span class="text-destructive">*</span></label
@@ -234,11 +223,6 @@
           class="flex min-h-[80px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm"
         ></textarea>
       </div>
-    </div>
-
-    <div class="rounded-lg border border-input bg-muted/40 p-3 text-sm text-muted-foreground">
-      O envio usa as mesmas credenciais de login. Para concluir o envio da solicitação, informe
-      também o ID do professor.
     </div>
 
     <div class="flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2 mt-2">

@@ -1,4 +1,4 @@
-<ng-container *ngIf="authService.role() === 'admin'">
+<ng-container *ngIf="auth.role() === 'admin'">
   <app-page-header title="Dashboard" description="Visão geral do sistema"></app-page-header>
 
   <div
@@ -133,7 +133,7 @@
   </ng-container>
 </ng-container>
 
-<ng-container *ngIf="authService.role() === 'professor'">
+<ng-container *ngIf="auth.role() === 'professor'">
   <app-page-header
     title="Dashboard"
     description="Visão geral das suas solicitações"
